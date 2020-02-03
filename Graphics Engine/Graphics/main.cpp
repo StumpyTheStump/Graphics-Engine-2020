@@ -1,6 +1,7 @@
 #include "glm.hpp"
 #include "gl_core_4_5.h"
 #include "glfw3.h"
+#include "ext.hpp"
 
 using uint = unsigned int;
 
@@ -43,6 +44,17 @@ int main()
 		glm::vec3( 0.5f, -0.5f, 0.0f)
 	};
 
+	glm::mat4 projection = glm::perspective(90.0f, 16 / 9.0f, 0.1f, 5.0f);
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 1), glm::vec3(1,0, 0), glm::vec3(0, 1, 0));
+	glm::mat4 model = glm::mat4(1);
+
+	glm::mat4 pvm = projection * view * model;
+
+	for (int i = 0; i < 6; ++i)
+	{
+		verticies[i] = (glm::vec3)(pvm * glm::vec4(verticies[i], 1));
+	}
+
 	uint VAO;
 	uint VBO;
 	// int IBO;
@@ -59,6 +71,7 @@ int main()
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 
 	// Keeps the window open till the Escape key is pressed
 	while (glfwWindowShouldClose(window) == false && 
