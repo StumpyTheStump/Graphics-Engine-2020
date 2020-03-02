@@ -5,8 +5,18 @@
 #include <fstream>
 #include <sstream>
 #include "camera.h"
+#include "OBJMesh.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+
 
 using uint = unsigned int;
+
+struct Vertex {
+	glm::vec3 position;
+	glm::vec2 texCoord;
+};
 
 int main()
 {
@@ -55,17 +65,18 @@ int main()
 		glm::vec3(-0.5f, -0.5f, 0.0f),
 		glm::vec3( 0.5f, -0.5f, 0.0f)
 	};*/
+	
 
-	glm::vec3 verticies[] =
+	Vertex verticies[] =
 	{
-		glm::vec3(0.5f, 0.5f, 0.5f),
-		glm::vec3(0.5f, -0.5f, 0.5f),
-		glm::vec3(0.5f, 0.5f, -0.5f),
-		glm::vec3(0.5f, -0.5f, -0.5f),
-		glm::vec3(-0.5f, -0.5f, -0.5f),
-		glm::vec3(-0.5f, -0.5f, 0.5f),
-		glm::vec3(-0.5f, 0.5f, -0.5f),
-		glm::vec3(-0.5f, 0.5f, 0.5f),
+		Vertex{glm::vec3(0.5f, 0.5f, 0.5f), glm::vec2(0,1)} ,
+		Vertex{glm::vec3(0.5f, -0.5f, 0.5f), glm::vec2(1,1)},
+		Vertex{glm::vec3(0.5f, 0.5f, -0.5f), glm::vec2(0,0)},
+		Vertex{glm::vec3(0.5f, -0.5f, -0.5f), glm::vec2(0,0)},
+		Vertex{glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec2(1,1)},
+		Vertex{glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec2(1,0)},
+		Vertex{glm::vec3(-0.5f, 0.5f, -0.5f), glm::vec2(0,1)},
+		Vertex{glm::vec3(-0.5f, 0.5f, 0.5f), glm::vec2(1,1)},
 	};
 
 	int index_buffer[] { 
@@ -76,10 +87,16 @@ int main()
 		6,2,0,0,7,6,
 		1,4,5,4,1,3 };
 
+	aie::OBJMesh myMesh;
+	uint m_texture;
+	int x, y, n;
+
 	// Create and Load mesh
 	uint VAO;
 	uint VBO;
 	uint IBO;
+
+	unsigned char* data = stbi_load("../images/logo.jpg", &x, &y, &n, 0);
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -87,22 +104,34 @@ int main()
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(glm::vec3), &verticies[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(Vertex), verticies, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36 * sizeof(int), index_buffer, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(glm::vec3));
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glGenTextures(1, &m_texture);
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // GL_LINEAR SAMPLES texels
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // GL_NEARESTS RETURNS just closest pixel
+
 
 	/** CAMERA **/
 	glm::mat4 projection = glm::perspective(glm::radians(90.0f), 16 / 9.0f, 0.1f, 100.0f);
 	
 	glm::mat4 model = glm::mat4(1);
 
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+
+	glm::mat4 dragon_tranform = glm::mat4(1);
+
+	glm::vec3 cameraPos = glm::vec3(0.0f, 4.0f, 7.0f);
 	glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
@@ -128,9 +157,9 @@ int main()
 	// Allocate space for shader program
 	vertex_shader_ID = glCreateShader(GL_VERTEX_SHADER);
 	// Convert to raw char*
-	const char* data = shader_data.c_str();
+	const char* m_data = shader_data.c_str();
 	// Send in the char* tp shader location
-	glShaderSource(vertex_shader_ID, 1, (const GLchar**)&data, 0);
+	glShaderSource(vertex_shader_ID, 1, (const GLchar**)&m_data, 0);
 	// Build
 	glCompileShader(vertex_shader_ID);
 
@@ -158,6 +187,8 @@ int main()
 
 	/** PART2 **/
 	std::ifstream in_file_stream_frag("..\\Shaders\\simple_frag.glsl", std::ifstream::in);
+	bool loaded = myMesh.load("../Models/Bunny.obj", false);
+
 
 	
 	// Load the source into a string for compilation
@@ -172,9 +203,9 @@ int main()
 	// Allocate space for shader program
 	fragment_shader_ID = glCreateShader(GL_FRAGMENT_SHADER);
 	// Convert to raw char*
-	data = shader_data.c_str();
+	m_data = shader_data.c_str();
 	// Send in the char* tp shader location
-	glShaderSource(fragment_shader_ID, 1, (const GLchar**)&data, 0);
+	glShaderSource(fragment_shader_ID, 1, (const GLchar**)&m_data, 0);
 	// Build
 	glCompileShader(fragment_shader_ID);
 
@@ -230,6 +261,7 @@ int main()
 
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_DEPTH_TEST);
 
 	glClearColor(r, g, b, a);
 
@@ -240,11 +272,14 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//glm::mat4 pvm = projection * view * model;
-		model = glm::rotate(model, 0.01f, glm::vec3(1, 1, 0));
+		model = glm::rotate(model, 0.01f, glm::vec3(0, 1, 0));
 
 		glm::mat4 pv = projection * view;
+		glm::mat4 world = glm::inverse(view);
+		//glm::vec3 cameraPosition = { world[3][0], world[3][1], world[3][2] };
+		glm::vec3 cameraPosition = glm::vec3(world[3]);
 
-		glm::vec4 color = glm::vec4(r, g, b, a);
+		glm::vec4 color = glm::vec4(0.1f, 0.1f, 0.0f,1);
 
 		
 
@@ -253,14 +288,31 @@ int main()
 		glUniformMatrix4fv(uniform_location, 1, false, glm::value_ptr(pv));
 		uniform_location = glGetUniformLocation(shader_program_ID, "model_matrix");
 		glUniformMatrix4fv(uniform_location, 1, false, glm::value_ptr(model));
-		uniform_location = glGetUniformLocation(shader_program_ID, "color");
+		uniform_location = glGetUniformLocation(shader_program_ID, "base_colour");
 		glUniform4fv(uniform_location, 1, glm::value_ptr(color));
+		uniform_location = glGetUniformLocation(shader_program_ID, "light_direction");
+		glUniform3fv(uniform_location, 1, glm::value_ptr(glm::vec3(-1)));
+
+		uniform_location = glGetUniformLocation(shader_program_ID, "normal_matrix");
+		glUniformMatrix3fv(uniform_location, 1, false, glm::value_ptr(glm::inverseTranspose(glm::mat3(model))));
+
+
+		uniform_location = glGetUniformLocation(shader_program_ID, "light_color");
+		glUniform3fv(uniform_location, 1, glm::value_ptr(glm::vec3(0.9f, 0.9f, 0.0f)));
+
+		uniform_location = glGetUniformLocation(shader_program_ID, "camera_position");
+		glUniform3fv(uniform_location, 1, glm::value_ptr(cameraPosition));
+
+
+		uniform_location = glGetUniformLocation(shader_program_ID, "specular_power");
+		glUniform1f(uniform_location,1000);
 
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		// DRAW THE BUNNY //
+		myMesh.draw();
 
-
-		if (rpositive)
+		/*if (rpositive)
 			r += 0.001f;
 		else
 			r -= 0.001f;
@@ -289,7 +341,7 @@ int main()
 		if (b >= 1)
 			bpositive = false;
 		else if (b <= 0)
-			bpositive = true;
+			bpositive = true;*/
 
 
 		glfwSwapBuffers(window);
