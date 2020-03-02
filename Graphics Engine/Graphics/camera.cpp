@@ -62,7 +62,7 @@ void camera::updateProjectionViewTransform()
 
 void camera::processInput(GLFWwindow* window)
 {
-	const float cameraSpeed = 0.05f;
+	/*const float cameraSpeed = 0.05f;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		cameraPos += cameraSpeed * cameraFront;
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -70,34 +70,9 @@ void camera::processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;*/
 }
 
-	void camera::getView(glm::mat4)
-	{
-	}
+	
 
-	void camera::getProjection(glm::mat4)
-	{
-	}
 
-	void camera::getProjectionView(glm::mat4)
-	{
-	}
-
-	void camera::updateProjectionViewTransform()
-	{
-	}
-
-	void camera::processInput(GLFWwindow* window)
-	{
-		/*const float cameraSpeed = 0.05f;
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			cameraPos += cameraSpeed * cameraFront;
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			cameraPos -= cameraSpeed * cameraFront;
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;*/
-	}
