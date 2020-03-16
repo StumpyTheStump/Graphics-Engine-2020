@@ -105,9 +105,10 @@ int main()
 		3,6,4,3,2,6,
 		6,2,0,0,7,6,
 		1,4,5,4,1,3 };
-
-	aie::OBJMesh myMesh;
+	
 	aie::OBJMesh ballMesh;
+	aie::OBJMesh myMesh;
+	
 	uint m_texture;
 	int x, y, n;
 
@@ -146,7 +147,8 @@ int main()
 	/** CAMERA **/
 	glm::mat4 projection = glm::perspective(glm::radians(90.0f), 16 / 9.0f, 0.1f, 100.0f);
 	
-	glm::mat4 model = glm::mat4(1);
+	glm::mat4 bunnyTransform = glm::mat4(0.1f);
+	bunnyTransform[3] = glm::vec4(0,4.1,0,1);
 	glm::mat4 ballTransform = glm::mat4(0.01f);
 	ballTransform[3][3] = 1;
 
@@ -159,9 +161,11 @@ int main()
 
 	glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-	uint vertex_shader_ID = 0;
-	uint fragment_shader_ID = 0;
-	uint shader_program_ID = 0;
+//---------------------------------------------------------------------------------------------------------------------------------------------
+	//BALL//
+	uint ball_vertex_shader_ID = 0;
+	uint ball_fragment_shader_ID = 0;
+	uint ball_shader_program_ID = 0;
 
 	// Load shader from file into string
 	std::string shader_data;
@@ -177,27 +181,27 @@ int main()
 	}
 
 	// Allocate space for shader program
-	vertex_shader_ID = glCreateShader(GL_VERTEX_SHADER);
+	ball_vertex_shader_ID = glCreateShader(GL_VERTEX_SHADER);
 	// Convert to raw char*
 	const char* m_data = shader_data.c_str();
 	// Send in the char* tp shader location
-	glShaderSource(vertex_shader_ID, 1, (const GLchar**)&m_data, 0);
+	glShaderSource(ball_vertex_shader_ID, 1, (const GLchar**)&m_data, 0);
 	// Build
-	glCompileShader(vertex_shader_ID);
+	glCompileShader(ball_vertex_shader_ID);
 
 	// Is it working
 	// Check the shader compiled
 	GLint success = GL_FALSE;
-	glGetShaderiv(vertex_shader_ID, GL_COMPILE_STATUS, &success);
+	glGetShaderiv(ball_vertex_shader_ID, GL_COMPILE_STATUS, &success);
 	if (success == GL_FALSE)
 	{
 		// Get the length of the OpenGL error message
 		GLint log_length = 0;
-		glGetShaderiv(vertex_shader_ID, GL_INFO_LOG_LENGTH, &log_length);
+		glGetShaderiv(ball_vertex_shader_ID, GL_INFO_LOG_LENGTH, &log_length);
 		// Create the error buffer
 		char* log = new char[log_length];
 		// Copy the error from the buffer
-		glGetShaderInfoLog(vertex_shader_ID, log_length, 0, log);
+		glGetShaderInfoLog(ball_vertex_shader_ID, log_length, 0, log);
 
 		// Create the error message
 		std::string error_message(log);
@@ -209,7 +213,7 @@ int main()
 
 	/** PART2 **/
 	std::ifstream in_file_stream_frag("..\\Shaders\\texture_frag.glsl", std::ifstream::in);
-	bool loaded = myMesh.load("../Models/Ball.obj", false);
+	bool loaded = ballMesh.load("../Models/Ball.obj", false);
 
 
 	
@@ -223,27 +227,27 @@ int main()
 	}
 
 	// Allocate space for shader program
-	fragment_shader_ID = glCreateShader(GL_FRAGMENT_SHADER);
+	ball_fragment_shader_ID = glCreateShader(GL_FRAGMENT_SHADER);
 	// Convert to raw char*
 	m_data = shader_data.c_str();
 	// Send in the char* tp shader location
-	glShaderSource(fragment_shader_ID, 1, (const GLchar**)&m_data, 0);
+	glShaderSource(ball_fragment_shader_ID, 1, (const GLchar**)&m_data, 0);
 	// Build
-	glCompileShader(fragment_shader_ID);
+	glCompileShader(ball_fragment_shader_ID);
 
 	// Is it working
 	// Check the shader compiled
 	success = GL_FALSE;
-	glGetShaderiv(fragment_shader_ID, GL_COMPILE_STATUS, &success);
+	glGetShaderiv(ball_fragment_shader_ID, GL_COMPILE_STATUS, &success);
 	if (success == GL_FALSE)
 	{
 		// Get the length of the OpenGL error message
 		GLint log_length = 0;
-		glGetShaderiv(fragment_shader_ID, GL_INFO_LOG_LENGTH, &log_length);
+		glGetShaderiv(ball_fragment_shader_ID, GL_INFO_LOG_LENGTH, &log_length);
 		// Create the error buffer
 		char* log = new char[log_length];
 		// Copy the error from the buffer
-		glGetShaderInfoLog(fragment_shader_ID, log_length, 0, log);
+		glGetShaderInfoLog(ball_fragment_shader_ID, log_length, 0, log);
 
 		// Create the error message
 		std::string error_message(log);
@@ -253,24 +257,148 @@ int main()
 		delete[] log;
 	}
 
-	shader_program_ID = glCreateProgram();
+	ball_shader_program_ID = glCreateProgram();
 
-	glAttachShader(shader_program_ID, vertex_shader_ID);
-	glAttachShader(shader_program_ID, fragment_shader_ID);
+	glAttachShader(ball_shader_program_ID, ball_vertex_shader_ID);
+	glAttachShader(ball_shader_program_ID, ball_fragment_shader_ID);
 
-	glLinkProgram(shader_program_ID);
+	glLinkProgram(ball_shader_program_ID);
 
 	success = GL_FALSE;
-	glGetProgramiv(shader_program_ID, GL_LINK_STATUS, &success);
+	glGetProgramiv(ball_shader_program_ID, GL_LINK_STATUS, &success);
 	if (!success)
 	{
 		// Get the length of the OpenGL error message
 		GLint log_length = 0;
-		glGetProgramiv(shader_program_ID, GL_INFO_LOG_LENGTH, &log_length);
+		glGetProgramiv(ball_shader_program_ID, GL_INFO_LOG_LENGTH, &log_length);
 		// Create the error buffer
 		char* log = new char[log_length];
 		// Copy the error from the buffer
-		glGetProgramInfoLog(shader_program_ID, log_length, 0, log);
+		glGetProgramInfoLog(ball_shader_program_ID, log_length, 0, log);
+
+		// Create the error message
+		std::string error_message(log);
+		error_message += "SHADER_FAILED_TO_COMPILE";
+		printf(error_message.c_str());
+		// Clean up anyway
+		delete[] log;
+
+	}
+
+//------------------------------------------------------------------------------------------------------------------------------------
+	//BUNNY//
+	uint bunny_vertex_shader_ID = 0;
+	uint bunny_fragment_shader_ID = 0;
+	uint bunny_shader_program_ID = 0;
+
+	// Load shader from file into string
+	std::string bunny_shader_data;
+	std::ifstream bunny_in_file_stream("..\\Shaders\\simple_vertex.glsl", std::ifstream::in);
+
+	// Load the source into a string for compilation
+	std::stringstream bunny_string_stream;
+	if (bunny_in_file_stream.is_open())
+	{
+		bunny_string_stream << bunny_in_file_stream.rdbuf();
+		bunny_shader_data = bunny_string_stream.str();
+		bunny_in_file_stream.close();
+	}
+
+	// Allocate space for shader program
+	bunny_vertex_shader_ID = glCreateShader(GL_VERTEX_SHADER);
+	// Convert to raw char*
+	const char* m_bunny_data = bunny_shader_data.c_str();
+	// Send in the char* tp shader location
+	glShaderSource(bunny_vertex_shader_ID, 1, (const GLchar**)&m_bunny_data, 0);
+	// Build
+	glCompileShader(bunny_vertex_shader_ID);
+
+	// Is it working
+	// Check the shader compiled
+	GLint bunny_success = GL_FALSE;
+	glGetShaderiv(bunny_vertex_shader_ID, GL_COMPILE_STATUS, &bunny_success);
+	if (bunny_success == GL_FALSE)
+	{
+		// Get the length of the OpenGL error message
+		GLint log_length = 0;
+		glGetShaderiv(bunny_vertex_shader_ID, GL_INFO_LOG_LENGTH, &log_length);
+		// Create the error buffer
+		char* log = new char[log_length];
+		// Copy the error from the buffer
+		glGetShaderInfoLog(bunny_vertex_shader_ID, log_length, 0, log);
+
+		// Create the error message
+		std::string error_message(log);
+		error_message += "SHADER_FAILED_TO_COMPILE";
+		printf(error_message.c_str());
+		// Clean up anyway
+		delete[] log;
+	}
+
+	/** PART2 **/
+	std::ifstream bunny_in_file_stream_frag("..\\Shaders\\simple_frag.glsl", std::ifstream::in);
+	bool bunny_loaded = myMesh.load("../Models/Bunny.obj", false);
+
+
+
+	// Load the source into a string for compilation
+	std::stringstream bunny_frag_string_stream;
+	if (bunny_in_file_stream_frag.is_open())
+	{
+		bunny_frag_string_stream << bunny_in_file_stream_frag.rdbuf();
+		bunny_shader_data = bunny_frag_string_stream.str();
+		bunny_in_file_stream_frag.close();
+	}
+
+	// Allocate space for shader program
+	bunny_fragment_shader_ID = glCreateShader(GL_FRAGMENT_SHADER);
+	// Convert to raw char*
+	m_bunny_data = bunny_shader_data.c_str();
+	// Send in the char* tp shader location
+	glShaderSource(bunny_fragment_shader_ID, 1, (const GLchar**)&m_bunny_data, 0);
+	// Build
+	glCompileShader(bunny_fragment_shader_ID);
+
+	// Is it working
+	// Check the shader compiled
+	bunny_success = GL_FALSE;
+	glGetShaderiv(bunny_fragment_shader_ID, GL_COMPILE_STATUS, &bunny_success);
+	if (bunny_success == GL_FALSE)
+	{
+		// Get the length of the OpenGL error message
+		GLint log_length = 0;
+		glGetShaderiv(bunny_fragment_shader_ID, GL_INFO_LOG_LENGTH, &log_length);
+		// Create the error buffer
+		char* log = new char[log_length];
+		// Copy the error from the buffer
+		glGetShaderInfoLog(bunny_fragment_shader_ID, log_length, 0, log);
+
+		// Create the error message
+		std::string error_message(log);
+		error_message += "SHADER_FAILED_TO_COMPILE";
+		printf(error_message.c_str());
+		// Clean up anyway
+		delete[] log;
+	}
+
+	bunny_shader_program_ID = glCreateProgram();
+
+	glAttachShader(bunny_shader_program_ID, bunny_vertex_shader_ID);
+	glAttachShader(bunny_shader_program_ID, bunny_fragment_shader_ID);
+
+	glLinkProgram(bunny_shader_program_ID);
+
+	bunny_success = GL_FALSE;
+	glGetProgramiv(bunny_shader_program_ID, GL_LINK_STATUS, &bunny_success);
+	if (!bunny_success)
+	{
+		// Get the length of the OpenGL error message
+		GLint log_length = 0;
+		glGetProgramiv(bunny_shader_program_ID, GL_INFO_LOG_LENGTH, &log_length);
+		// Create the error buffer
+		char* log = new char[log_length];
+		// Copy the error from the buffer
+		glGetProgramInfoLog(bunny_shader_program_ID, log_length, 0, log);
 
 		// Create the error message
 		std::string error_message(log);
@@ -301,7 +429,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//glm::mat4 pvm = projection * view * model;
-		model = glm::rotate(model, 0.01f, glm::vec3(0, 1, 0));
+		bunnyTransform = glm::rotate(bunnyTransform, 0.01f, glm::vec3(0, 1, 0));
 
 		glm::mat4 pv = projection * view;
 		glm::mat4 world = glm::inverse(view);
@@ -312,38 +440,37 @@ int main()
 
 		
 
-		glUseProgram(shader_program_ID);
-		auto uniform_location = glGetUniformLocation(shader_program_ID, "projection_view_matrix");
+		glUseProgram(ball_shader_program_ID);
+		auto uniform_location = glGetUniformLocation(ball_shader_program_ID, "projection_view_matrix");
 		glUniformMatrix4fv(uniform_location, 1, false, glm::value_ptr(pv));
-		uniform_location = glGetUniformLocation(shader_program_ID, "model_matrix");
+		uniform_location = glGetUniformLocation(ball_shader_program_ID, "model_matrix");
 		glUniformMatrix4fv(uniform_location, 1, false, glm::value_ptr(ballTransform));
-		uniform_location = glGetUniformLocation(shader_program_ID, "base_colour");
+		uniform_location = glGetUniformLocation(ball_shader_program_ID, "base_colour");
 		glUniform4fv(uniform_location, 1, glm::value_ptr(color));
-		uniform_location = glGetUniformLocation(shader_program_ID, "light_direction");
+		uniform_location = glGetUniformLocation(ball_shader_program_ID, "light_direction");
 		glUniform3fv(uniform_location, 1, glm::value_ptr(glm::vec3(-1)));
 
-		uniform_location = glGetUniformLocation(shader_program_ID, "normal_matrix");
-		glUniformMatrix3fv(uniform_location, 1, false, glm::value_ptr(glm::inverseTranspose(glm::mat3(model))));
+		uniform_location = glGetUniformLocation(ball_shader_program_ID, "normal_matrix");
+		glUniformMatrix3fv(uniform_location, 1, false, glm::value_ptr(glm::inverseTranspose(glm::mat3(ballTransform))));
 
 
-		uniform_location = glGetUniformLocation(shader_program_ID, "light_color");
+		uniform_location = glGetUniformLocation(ball_shader_program_ID, "light_color");
 		glUniform3fv(uniform_location, 1, glm::value_ptr(glm::vec3(r, g, b)));
 
-		uniform_location = glGetUniformLocation(shader_program_ID, "camera_position");
+		uniform_location = glGetUniformLocation(ball_shader_program_ID, "camera_position");
 		glUniform3fv(uniform_location, 1, glm::value_ptr(cameraPosition));
 
 
-		uniform_location = glGetUniformLocation(shader_program_ID, "specular_power");
+		uniform_location = glGetUniformLocation(ball_shader_program_ID, "specular_power");
 		glUniform1f(uniform_location,32.0f);
+
 
 		//glBindVertexArray(VAO);
 		//glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-		// DRAW THE BUNNY //
 
 		// Get the uniform variables location. You've probably already done that before...
-		uint decalTexLocation = glGetUniformLocation(shader_program_ID, "diffuseTexture");
-		uint bumpTexLocation = glGetUniformLocation(shader_program_ID, "normalTexture");
-
+		uint decalTexLocation = glGetUniformLocation(ball_shader_program_ID, "diffuseTexture");
+		uint bumpTexLocation = glGetUniformLocation(ball_shader_program_ID, "normalTexture");
 
 		glUniform1i(decalTexLocation, 0);
 		glUniform1i(bumpTexLocation, 1);
@@ -354,7 +481,37 @@ int main()
 		glActiveTexture(GL_TEXTURE1); // Texture unit 1
 		glBindTexture(GL_TEXTURE_2D, normal);
 
+		ballMesh.draw();
+
+
+//------------------------------------------------------------------------------------------------------------------------------------------------
+		//BUNNY//
+		glUseProgram(bunny_shader_program_ID);
+		auto bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "projection_view_matrix");
+		glUniformMatrix4fv(bunny_uniform_location, 1, false, glm::value_ptr(pv));
+		bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "model_matrix");
+		glUniformMatrix4fv(bunny_uniform_location, 1, false, glm::value_ptr(bunnyTransform));
+		bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "base_colour");
+		glUniform4fv(bunny_uniform_location, 1, glm::value_ptr(color));
+		bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "light_direction");
+		glUniform3fv(bunny_uniform_location, 1, glm::value_ptr(glm::vec3(-1)));
+
+		bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "normal_matrix");
+		glUniformMatrix3fv(bunny_uniform_location, 1, false, glm::value_ptr(glm::inverseTranspose(glm::mat3(bunnyTransform))));
+
+
+		bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "light_color");
+		glUniform3fv(bunny_uniform_location, 1, glm::value_ptr(glm::vec3(r, g, b)));
+
+		bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "camera_position");
+		glUniform3fv(bunny_uniform_location, 1, glm::value_ptr(cameraPosition));
+
+
+		bunny_uniform_location = glGetUniformLocation(bunny_shader_program_ID, "specular_power");
+		glUniform1f(bunny_uniform_location, 32.0f);
+
 		myMesh.draw();
+
 
 		if (rpositive)
 			r += 0.001f;
