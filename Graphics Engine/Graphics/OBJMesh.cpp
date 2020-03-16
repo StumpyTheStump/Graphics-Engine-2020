@@ -174,20 +174,20 @@ void OBJMesh::draw(bool usePatches /* = false */) {
 	int dispTexUniform = glGetUniformLocation(program, "displacementTexture");
 
 	// set texture slots (these don't change per material)
-	if (diffuseTexUniform >= 0)
-		glUniform1i(diffuseTexUniform, 0);
-	if (alphaTexUniform >= 0)
-		glUniform1i(alphaTexUniform, 1);
-	if (ambientTexUniform >= 0)
-		glUniform1i(ambientTexUniform, 2);
-	if (specTexUniform >= 0)
-		glUniform1i(specTexUniform, 3);
-	if (specHighlightTexUniform >= 0)
-		glUniform1i(specHighlightTexUniform, 4);
-	if (normalTexUniform >= 0)
-		glUniform1i(normalTexUniform, 5);
-	if (dispTexUniform >= 0)
-		glUniform1i(dispTexUniform, 6);
+	//if (diffuseTexUniform >= 0)
+	//	glUniform1i(diffuseTexUniform, 0);
+	//if (alphaTexUniform >= 0)
+	//	glUniform1i(alphaTexUniform, 1);
+	//if (ambientTexUniform >= 0)
+	//	glUniform1i(ambientTexUniform, 2);
+	//if (specTexUniform >= 0)
+	//	glUniform1i(specTexUniform, 3);
+	//if (specHighlightTexUniform >= 0)
+	//	glUniform1i(specHighlightTexUniform, 4);
+	//if (normalTexUniform >= 0)
+	//	glUniform1i(normalTexUniform, 5);
+	//if (dispTexUniform >= 0)
+	//	glUniform1i(dispTexUniform, 6);
 
 	int currentMaterial = -1;
 

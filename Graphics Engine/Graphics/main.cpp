@@ -10,8 +10,25 @@
 #include "stb_image.h"
 
 
-
 using uint = unsigned int;
+
+uint loadTexture(std::string filename)
+{
+	uint m_texture;
+	int x, y, n;
+	unsigned char* data = stbi_load(filename.c_str(), &x, &y, &n, 0);
+
+	glGenTextures(1, &m_texture);
+	glBindTexture(GL_TEXTURE_2D, m_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, x, y, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // GL_LINEAR SAMPLES texels
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // GL_NEARESTS RETURNS just closest pixel
+	//glDeleteTextures(1, &m_texture));
+
+	stbi_image_free(data);
+	return m_texture;
+}
+
 
 struct Vertex {
 	glm::vec3 position;
@@ -20,9 +37,11 @@ struct Vertex {
 
 int main()
 {
-	float r = 0.0f;
-	float g = 0.0f;
-	float b = 0.0f;
+
+	stbi_set_flip_vertically_on_load(true);
+	float r = 0.2f;
+	float g = 0.2f;
+	float b = 0.2f;
 	float a = 1.0f;
 
 	bool rpositive = true;
@@ -88,6 +107,7 @@ int main()
 		1,4,5,4,1,3 };
 
 	aie::OBJMesh myMesh;
+	aie::OBJMesh ballMesh;
 	uint m_texture;
 	int x, y, n;
 
@@ -127,6 +147,8 @@ int main()
 	glm::mat4 projection = glm::perspective(glm::radians(90.0f), 16 / 9.0f, 0.1f, 100.0f);
 	
 	glm::mat4 model = glm::mat4(1);
+	glm::mat4 ballTransform = glm::mat4(0.01f);
+	ballTransform[3][3] = 1;
 
 
 	glm::mat4 dragon_tranform = glm::mat4(1);
@@ -143,7 +165,7 @@ int main()
 
 	// Load shader from file into string
 	std::string shader_data;
-	std::ifstream in_file_stream("..\\Shaders\\simple_vertex.glsl", std::ifstream::in);
+	std::ifstream in_file_stream("..\\Shaders\\texture_vert.glsl", std::ifstream::in);
 
 	// Load the source into a string for compilation
 	std::stringstream string_stream;
@@ -186,8 +208,8 @@ int main()
 	}
 
 	/** PART2 **/
-	std::ifstream in_file_stream_frag("..\\Shaders\\simple_frag.glsl", std::ifstream::in);
-	bool loaded = myMesh.load("../Models/Bunny.obj", false);
+	std::ifstream in_file_stream_frag("..\\Shaders\\texture_frag.glsl", std::ifstream::in);
+	bool loaded = myMesh.load("../Models/Ball.obj", false);
 
 
 	
@@ -259,6 +281,13 @@ int main()
 
 	}
 
+
+	uint diffuse = loadTexture("../Models/football_ball_BaseColor.png");
+	uint normal = loadTexture("../Models/football_ball_Normal.png");
+
+
+
+
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
@@ -279,7 +308,7 @@ int main()
 		//glm::vec3 cameraPosition = { world[3][0], world[3][1], world[3][2] };
 		glm::vec3 cameraPosition = glm::vec3(world[3]);
 
-		glm::vec4 color = glm::vec4(0.1f, 0.1f, 0.0f,1);
+		glm::vec4 color = glm::vec4(0, 0, 0, 1);
 
 		
 
@@ -287,7 +316,7 @@ int main()
 		auto uniform_location = glGetUniformLocation(shader_program_ID, "projection_view_matrix");
 		glUniformMatrix4fv(uniform_location, 1, false, glm::value_ptr(pv));
 		uniform_location = glGetUniformLocation(shader_program_ID, "model_matrix");
-		glUniformMatrix4fv(uniform_location, 1, false, glm::value_ptr(model));
+		glUniformMatrix4fv(uniform_location, 1, false, glm::value_ptr(ballTransform));
 		uniform_location = glGetUniformLocation(shader_program_ID, "base_colour");
 		glUniform4fv(uniform_location, 1, glm::value_ptr(color));
 		uniform_location = glGetUniformLocation(shader_program_ID, "light_direction");
@@ -298,21 +327,36 @@ int main()
 
 
 		uniform_location = glGetUniformLocation(shader_program_ID, "light_color");
-		glUniform3fv(uniform_location, 1, glm::value_ptr(glm::vec3(0.9f, 0.9f, 0.0f)));
+		glUniform3fv(uniform_location, 1, glm::value_ptr(glm::vec3(r, g, b)));
 
 		uniform_location = glGetUniformLocation(shader_program_ID, "camera_position");
 		glUniform3fv(uniform_location, 1, glm::value_ptr(cameraPosition));
 
 
 		uniform_location = glGetUniformLocation(shader_program_ID, "specular_power");
-		glUniform1f(uniform_location,1000);
+		glUniform1f(uniform_location,32.0f);
 
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		//glBindVertexArray(VAO);
+		//glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 		// DRAW THE BUNNY //
+
+		// Get the uniform variables location. You've probably already done that before...
+		uint decalTexLocation = glGetUniformLocation(shader_program_ID, "diffuseTexture");
+		uint bumpTexLocation = glGetUniformLocation(shader_program_ID, "normalTexture");
+
+
+		glUniform1i(decalTexLocation, 0);
+		glUniform1i(bumpTexLocation, 1);
+
+		glActiveTexture(GL_TEXTURE0); // Texture unit 0
+		glBindTexture(GL_TEXTURE_2D, diffuse);
+
+		glActiveTexture(GL_TEXTURE1); // Texture unit 1
+		glBindTexture(GL_TEXTURE_2D, normal);
+
 		myMesh.draw();
 
-		/*if (rpositive)
+		if (rpositive)
 			r += 0.001f;
 		else
 			r -= 0.001f;
@@ -341,7 +385,7 @@ int main()
 		if (b >= 1)
 			bpositive = false;
 		else if (b <= 0)
-			bpositive = true;*/
+			bpositive = true;
 
 
 		glfwSwapBuffers(window);
